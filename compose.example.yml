@@ -1,0 +1,9 @@
+# Drop-in service. Add it to the same compose file as Bindarr, or run it on its own.
+# Put it behind your reverse proxy (HTTPS lets the Copy button use the clipboard).
+services:
+  bindarr-import:
+    image: ghcr.io/cojaksilverback/bindarr-import-companion:latest
+    container_name: bindarr-import
+    restart: unless-stopped
+    ports:
+      - "3002:8080"

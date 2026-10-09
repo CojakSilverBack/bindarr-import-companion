@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Convert TCGplayer exports, precon decklists and Moxfield lists into the text format Bindarr imports.">
+  <title>Bindarr Import Companion</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="tag">Unofficial companion for Bindarr</span>
+    <h1>Bindarr Import Companion</h1>
+    <p class="lede">Paste a TCGplayer export, a decklist (precon, Moxfield, MTGGoldfish), or a ManaBox list. It rewrites every line into the text format Bindarr's <b>Settings → Import Backup</b> reads: <span class="mono">qty Name (SET) number</span>, plus <span class="mono">*F*</span> for foil.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="in-h">
+    <h2 id="in-h">1 · Paste the list</h2>
+    <div class="formats">
+      <div><b>TCGplayer app</b><br><code>2 Zahur, Glory's Past (Borderless) [DFT] 370</code></div>
+      <div><b>Decklist / precon</b><br><code>1 Arcane Signet</code> — set the default set below</div>
+      <div><b>ManaBox / Moxfield</b><br><code>1 Spell Pierce (DFT) 64 *F*</code></div>
+    </div>
+    <textarea id="input" spellcheck="false" aria-label="Card list"></textarea>
+    <p class="hint">The list above is example data. Replace it with your own. Section headers like "Commander" or "Sideboard" are skipped.</p>
+    <div class="opts">
+      <div class="field">
+        <label for="defset">Default set for lines without one</label>
+        <input type="text" id="defset" placeholder="e.g. EOC" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="setmap">Set code fixes</label>
+        <input type="text" id="setmap" placeholder="e.g. PRE=PDFT, ASDFT=ADFT" autocomplete="off">
+      </div>
+      <label class="check"><input type="checkbox" id="usescry" checked> Check every card against Scryfall</label>
+    </div>
+    <p class="hint">Precons: use the commander set's code (Edge of Eternities Commander is <span class="mono">EOC</span>). Cards not found in that set fall back to any printing and get flagged. Set code fixes map TCGplayer-only codes to Scryfall codes.</p>
+    <div class="actions">
+      <button class="primary" id="go" type="button">Convert</button>
+      <span class="status" id="status" role="status"></span>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="res-h">
+    <h2 id="res-h">2 · Review</h2>
+    <div class="summary" id="summary"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Qty</th><th>Card</th><th>Set · No.</th><th>Foil</th><th>Status</th><th>Note</th><th>Original line</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="hint">Tick <b>Foil</b> for foils. TCGplayer's export doesn't mark them, so check the physical cards. Amber rows were matched to a different printing than the line asked for; confirm them before importing.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="out-h">
+    <h2 id="out-h">3 · Copy into Bindarr</h2>
+    <textarea id="output" readonly spellcheck="false" aria-label="Bindarr import text"></textarea>
+    <div class="actions">
+      <button class="primary" id="copy" type="button">Copy text</button>
+      <span class="status" id="copystatus" role="status"></span>
+    </div>
+    <p class="hint">Save it as a <span class="mono">.txt</span> file and import it once. Bindarr adds every line as new copies, so importing the same list twice doubles the cards. Red rows are left out of this text; add those cards by hand.</p>
+  </section>
+
+  <footer>
+    <span>Card data from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Not affiliated with Scryfall, Bindarr, TCGplayer, ManaBox, Moxfield or Wizards of the Coast.</span>
+    <span>Everything runs in your browser. Your list is only sent to Scryfall's public API, as card names and numbers.</span>
+  </footer>
+</div>
+<script src="js/core.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

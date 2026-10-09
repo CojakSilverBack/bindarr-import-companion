@@ -1,0 +1,85 @@
+/*
+ * Bindarr Import Companion — parsing and formatting (no DOM, no network).
+ * Works in the browser (window.BindarrCore) and in Node (require) for tests.
+ */
+(function (root) {
+  "use strict";
+
+  /** "PRE=PDFT, ASDFT=ADFT" -> { PRE: "PDFT", ASDFT: "ADFT" } */
+  function parseSetMap(text) {
+    const map = {};
+    (text || "").split(/[,;\n]/).forEach(function (pair) {
+      const kv = pair.split("=");
+      if (kv.length === 2 && kv[0].trim() && kv[1].trim()) {
+        map[kv[0].trim().toUpperCase()] = kv[1].trim().toUpperCase();
+      }
+    });
+    return map;
+  }
+
+  /**
+   * Parse one line of a card list.
+   * Returns null for blank lines, { skip: true, raw } for headers ("Commander", "Sideboard"),
+   * otherwise { qty, name, set, num, foil, src, variant, raw }.
+   *
+   * Accepted shapes:
+   *   TCGplayer app      2 Zahur, Glory's Past (Borderless) [DFT] 370
+   *   ManaBox / Moxfield 1 Spell Pierce (DFT) 64 *F*
+   *   Set only           1 Sol Ring (EOC)
+   *   Plain decklist     1 Arcane Signet      (also "1x Arcane Signet")
+   */
+  function parseLine(rawLine) {
+    const t = rawLine.trim();
+    if (!t) return null;
+    const m = t.match(/^(\d+)x?\s+(.+)$/i);
+    if (!m) return { skip: true, raw: t };
+
+    const qty = parseInt(m[1], 10);
+    let rest = m[2].trim();
+    let foil = false;
+    if (/\s\*[FE]\*\s*$/i.test(rest)) {
+      foil = true;
+      rest = rest.replace(/\s\*[FE]\*\s*$/i, "").trim();
+    }
+
+    let name = rest, set = "", num = "", src = "plain", variant = "";
+    let x = rest.match(/^(.*?)\s\[([A-Za-z0-9]+)\]\s+(\S+)$/);
+    if (x) { name = x[1]; set = x[2]; num = x[3]; src = "tcgplayer"; }
+    else if ((x = rest.match(/^(.*?)\s\(([A-Za-z0-9]{2,6})\)\s+(\S+)$/))) { name = x[1]; set = x[2]; num = x[3]; src = "setnum"; }
+    else if ((x = rest.match(/^(.*?)\s\(([A-Za-z0-9]{2,6})\)$/))) { name = x[1]; set = x[2]; src = "setonly"; }
+
+    // TCGplayer appends variant labels after the name: "(Borderless)", "(0289)", "(First-Place Foil)".
+    const vm = name.match(/((?:\s\([^)]*\))+)$/);
+    if (vm && src !== "plain") { variant = vm[1].trim(); name = name.slice(0, vm.index).trim(); }
+    if (/foil/i.test(variant)) foil = true;
+
+    return { qty: qty, name: name.trim(), set: set.toUpperCase(), num: num, foil: foil, src: src, variant: variant, raw: t };
+  }
+
+  /** Bindarr / ManaBox text line: "2 Zahur, Glory's Past (DFT) 370 *F*" */
+  function formatLine(row) {
+    return row.qty + " " + row.name + " (" + row.set + ") " + row.num + (row.foil ? " *F*" : "");
+  }
+
+  /** Scryfall /cards/collection identifier for a parsed row. */
+  function identifierFor(row, defaultSet, setMap) {
+    const map = setMap || {};
+    const set = row.set ? (map[row.set] || row.set) : (defaultSet || "");
+    if (set && row.num) return { set: set.toLowerCase(), collector_number: row.num };
+    if (set) return { name: row.name, set: set.toLowerCase() };
+    return { name: row.name };
+  }
+
+  /** Does a Scryfall card object answer this identifier? (Collection results are not positional.) */
+  function cardMatches(card, id) {
+    const names = [card.name].concat((card.card_faces || []).map(function (f) { return f.name; }))
+      .map(function (n) { return (n || "").toLowerCase(); });
+    if (id.collector_number) return card.set === id.set && card.collector_number === id.collector_number;
+    const nameHit = names.indexOf((id.name || "").toLowerCase()) !== -1;
+    return id.set ? (nameHit && card.set === id.set) : nameHit;
+  }
+
+  const api = { parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.BindarrCore = api;
+})(this);
