@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- Same policy nginx sends as a header, minus frame-ancestors (ignored in a meta tag). Covers GitHub Pages, which can't set headers. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://api.scryfall.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Convert TCGplayer exports, precon decklists and Moxfield lists into the text format Bindarr imports.">
   <title>Bindarr Import Companion</title>

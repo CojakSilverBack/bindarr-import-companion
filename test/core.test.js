@@ -68,3 +68,24 @@ test("cardMatches handles double-faced names and set/number", () => {
   assert.equal(C.cardMatches(dfc, { set: "eoc", collector_number: "12" }), true);
   assert.equal(C.cardMatches(dfc, { set: "eoe", collector_number: "12" }), false);
 });
+
+test("quantity outside 1-999 is rejected, not parsed", () => {
+  assert.match(C.parseLine("0 Sol Ring").error, /Quantity/);
+  assert.match(C.parseLine("1000 Sol Ring").error, /Quantity/);
+  assert.match(C.parseLine("99999999999999999999 Sol Ring").error, /Quantity/);
+  assert.equal(C.parseLine("999 Sol Ring").qty, 999);
+  assert.equal(C.parseLine("1x Sol Ring").qty, 1);
+});
+
+test("over-long line is rejected and its raw text truncated", () => {
+  const r = C.parseLine("1 " + "A".repeat(400));
+  assert.match(r.error, /over 300 characters/);
+  assert.ok(r.raw.length <= 81);
+});
+
+test("checkInput enforces character and line limits", () => {
+  assert.equal(C.checkInput("1 Sol Ring\n1 Arcane Signet"), "");
+  assert.equal(C.checkInput("1 Sol Ring\n".repeat(C.LIMITS.maxLines)), "");
+  assert.match(C.checkInput("x".repeat(C.LIMITS.maxChars + 1)), /characters/);
+  assert.match(C.checkInput("1 Sol Ring\n".repeat(C.LIMITS.maxLines + 1)), /lines/);
+});

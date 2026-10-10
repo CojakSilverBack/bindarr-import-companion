@@ -1,0 +1,11 @@
+# Weekly PRs for new action releases (keeps the pinned SHAs current) and nginx base image rebuilds.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly

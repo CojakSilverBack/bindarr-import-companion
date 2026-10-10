@@ -5,6 +5,18 @@
 (function (root) {
   "use strict";
 
+  /** Upper bounds that keep a huge paste from freezing the page or flooding Scryfall. */
+  const LIMITS = { maxChars: 500000, maxLines: 10000, maxLineLength: 300, maxQty: 999 };
+
+  /** Whole-input check before parsing. Returns an error message, or "" when the input is within limits. */
+  function checkInput(text) {
+    const s = text || "";
+    if (s.length > LIMITS.maxChars) return "The list is over " + LIMITS.maxChars.toLocaleString("en-US") + " characters. Split it into smaller lists.";
+    const lines = s.replace(/\s+$/, "").split(/\r?\n/).length;
+    if (lines > LIMITS.maxLines) return "The list has " + lines.toLocaleString("en-US") + " lines; the limit is " + LIMITS.maxLines.toLocaleString("en-US") + ". Split it into smaller lists.";
+    return "";
+  }
+
   /** "PRE=PDFT, ASDFT=ADFT" -> { PRE: "PDFT", ASDFT: "ADFT" } */
   function parseSetMap(text) {
     const map = {};
@@ -20,6 +32,7 @@
   /**
    * Parse one line of a card list.
    * Returns null for blank lines, { skip: true, raw } for headers ("Commander", "Sideboard"),
+   * { error, raw } for card lines that break a limit (too long, quantity outside 1-999),
    * otherwise { qty, name, set, num, foil, src, variant, raw }.
    *
    * Accepted shapes:
@@ -31,10 +44,16 @@
   function parseLine(rawLine) {
     const t = rawLine.trim();
     if (!t) return null;
+    if (t.length > LIMITS.maxLineLength) {
+      return { error: "Line is over " + LIMITS.maxLineLength + " characters", raw: t.slice(0, 80) + "…" };
+    }
     const m = t.match(/^(\d+)x?\s+(.+)$/i);
     if (!m) return { skip: true, raw: t };
 
-    const qty = parseInt(m[1], 10);
+    const qty = m[1].length <= 4 ? parseInt(m[1], 10) : Infinity;
+    if (!(qty >= 1 && qty <= LIMITS.maxQty)) {
+      return { error: "Quantity must be 1 to " + LIMITS.maxQty, raw: t };
+    }
     let rest = m[2].trim();
     let foil = false;
     if (/\s\*[FE]\*\s*$/i.test(rest)) {
@@ -79,7 +98,7 @@
     return id.set ? (nameHit && card.set === id.set) : nameHit;
   }
 
-  const api = { parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
+  const api = { LIMITS: LIMITS, checkInput: checkInput, parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.BindarrCore = api;
 })(this);

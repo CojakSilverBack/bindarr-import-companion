@@ -9,6 +9,8 @@
   const COLLECTION_GAP_MS = 550;
   const NAMED_GAP_MS = 120;
   const BATCH = 75;
+  const TIMEOUT_MS = 20000;   // give up on a Scryfall request after 20 s
+  const MAX_FUZZY = 200;      // one-at-a-time fuzzy lookups per run
 
   const SAMPLE = [
     "2 Tranquil Cove [DFT] 267",
@@ -28,8 +30,21 @@
   }
   function setStatus(text) { $("status").textContent = text; }
 
+  // fetch() with a timeout, so a stalled request can't hang the page.
+  async function fetchTimed(url, opts) {
+    const ctl = new AbortController();
+    const timer = setTimeout(function () { ctl.abort(); }, TIMEOUT_MS);
+    try {
+      return await fetch(url, Object.assign({}, opts, { signal: ctl.signal }));
+    } catch (e) {
+      if (e.name === "AbortError") throw new Error("Scryfall didn't answer within " + TIMEOUT_MS / 1000 + " seconds");
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
   async function scryCollection(ids) {
-    const res = await fetch("https://api.scryfall.com/cards/collection", {
+    const res = await fetchTimed("https://api.scryfall.com/cards/collection", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({ identifiers: ids })
@@ -38,7 +53,7 @@
     return res.json();
   }
   async function scryFuzzy(name) {
-    const res = await fetch("https://api.scryfall.com/cards/named?fuzzy=" + encodeURIComponent(name), { headers: { "Accept": "application/json" } });
+    const res = await fetchTimed("https://api.scryfall.com/cards/named?fuzzy=" + encodeURIComponent(name), { headers: { "Accept": "application/json" } });
     return res.ok ? res.json() : null;
   }
   async function resolvePass(list, idFn) {
@@ -63,14 +78,20 @@
   async function convert(useScryfall) {
     const defSet = $("defset").value.trim().toUpperCase();
     const map = C.parseSetMap($("setmap").value);
-    const parsed = $("input").value.split(/\r?\n/).map(C.parseLine).filter(Boolean);
+    const text = $("input").value;
+    const tooBig = C.checkInput(text);
+    if (tooBig) { setStatus(tooBig); return; }
+    const parsed = text.split(/\r?\n/).map(C.parseLine).filter(Boolean);
     skipped = parsed.filter(function (p) { return p.skip; });
     rows = parsed.filter(function (p) { return !p.skip; }).map(function (p) {
+      // Lines that break a limit become red rows, so they're visible but never looked up or exported.
+      if (p.error) return { qty: 0, name: p.raw, set: "", num: "", foil: false, raw: p.raw, status: "bad", note: p.error, _card: null, _invalid: true };
       return Object.assign({}, p, { wantSet: p.set ? (map[p.set] || p.set) : defSet, status: "idle", note: "" });
     });
+    const valid = rows.filter(function (r) { return !r._invalid; });
 
     if (!useScryfall) {
-      rows.forEach(function (r) {
+      valid.forEach(function (r) {
         r.set = r.wantSet;
         if (!r.set || !r.num) { r.status = "bad"; r.note = "Needs a set and number. Turn on the Scryfall check."; }
         else { r.note = "Not checked"; }
@@ -82,13 +103,13 @@
     $("go").disabled = true;
     try {
       // Pass 1: exactly what the line asked for (set + number, or name in the given set).
-      await resolvePass(rows, function (r) { return C.identifierFor(r, defSet, map); });
-      rows.forEach(function (r) {
+      await resolvePass(valid, function (r) { return C.identifierFor(r, defSet, map); });
+      valid.forEach(function (r) {
         if (r._card) applyCard(r, "ok", r.src === "tcgplayer" && r.variant ? "TCGplayer variant: " + r.variant : "");
       });
 
       // Pass 2: number not found -> same set, by name.
-      let left = rows.filter(function (r) { return !r._card && r.wantSet && r.num; });
+      let left = valid.filter(function (r) { return !r._card && r.wantSet && r.num; });
       if (left.length) {
         await sleep(COLLECTION_GAP_MS);
         await resolvePass(left, function (r) { return { name: r.name, set: r.wantSet.toLowerCase() }; });
@@ -96,7 +117,7 @@
       }
 
       // Pass 3: not in that set -> Scryfall's default printing.
-      left = rows.filter(function (r) { return !r._card; });
+      left = valid.filter(function (r) { return !r._card; });
       if (left.length) {
         await sleep(COLLECTION_GAP_MS);
         await resolvePass(left, function (r) { return { name: r.name }; });
@@ -106,8 +127,11 @@
       }
 
       // Pass 4: typos and partial names -> fuzzy, one at a time.
-      left = rows.filter(function (r) { return !r._card; });
-      for (const r of left) {
+      left = valid.filter(function (r) { return !r._card; });
+      left.slice(MAX_FUZZY).forEach(function (r) {
+        r.status = "bad"; r.note = "Not found; skipped the name-correction lookup (limit " + MAX_FUZZY + " per run). Add by hand.";
+      });
+      for (const r of left.slice(0, MAX_FUZZY)) {
         setStatus("Fuzzy lookup: " + r.name);
         await sleep(NAMED_GAP_MS);
         const c = await scryFuzzy(r.name);
@@ -151,6 +175,8 @@
     if (by("ok")) parts.push("<span class=\"pill ok\">" + by("ok") + " matched</span>");
     if (by("warn")) parts.push("<span class=\"pill warn\">" + by("warn") + " to check</span>");
     if (by("bad")) parts.push("<span class=\"pill bad\">" + by("bad") + " missing</span>");
+    const rejected = rows.filter(function (r) { return r._invalid; }).length;
+    if (rejected) parts.push("<span class=\"pill bad\">" + rejected + " lines rejected</span>");
     if (by("idle")) parts.push("<span class=\"pill idle\">" + by("idle") + " unchecked</span>");
     parts.push("<span class=\"pill idle\">" + sum(function (r) { return r.foil; }) + " foil</span>");
     if (skipped.length) parts.push("<span class=\"pill idle\" title=\"" + esc(skipped.map(function (s) { return s.raw; }).join(" | ")) + "\">" + skipped.length + " header lines skipped</span>");

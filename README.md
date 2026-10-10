@@ -68,9 +68,15 @@ text instead).
 ## Privacy
 
 Everything runs in your browser. The only outside calls are to Scryfall's public API
-(`/cards/collection` and `/cards/named`) with card names, set codes and collector numbers. The container
-sends a Content-Security-Policy that allows nothing else. The page stays under Scryfall's published rate
-limits.
+(`/cards/collection` and `/cards/named`) with card names, set codes and collector numbers. A
+Content-Security-Policy allows nothing else. The page stays under Scryfall's published rate limits, and
+caps each run at 10,000 lines.
+
+The Docker image sends the full set of security headers (CSP, `frame-ancestors`, `nosniff`,
+`Referrer-Policy`, `Permissions-Policy`). GitHub Pages can't set headers, so the hosted copy carries the
+CSP and referrer policy as `<meta>` tags; it has no `frame-ancestors` or `nosniff`. The page has no login
+and stores nothing, so that gap is small, but self-host the image if you want every header. Add HSTS at
+your HTTPS reverse proxy.
 
 ## Develop
 
