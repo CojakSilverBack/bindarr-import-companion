@@ -52,6 +52,13 @@ textarea:focus-visible, input:focus-visible, button:focus-visible { outline: 2px
 .field { display: grid; gap: 4px; min-width: 0; }
 .field label { font-size: .78rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .field input[type=text] { font: 14px var(--f-mono); padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); width: 14rem; max-width: 100%; }
+/* Set autocomplete dropdown */
+.field { position: relative; }
+.ac-list { position: absolute; top: 100%; left: 0; z-index: 10; margin: 4px 0 0; padding: 4px 0; list-style: none; width: max(100%, 20rem); max-width: calc(100vw - 32px); max-height: 18rem; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 18px rgb(0 0 0 / .18); }
+.ac-list li { display: grid; gap: 1px; padding: 6px 10px; cursor: pointer; }
+.ac-list li b { font: 600 .85rem var(--f-mono); }
+.ac-list li span { font-size: .82rem; color: var(--muted); }
+.ac-list li[aria-selected="true"], .ac-list li:hover { background: var(--idle-bg); }
 .check { display: flex; gap: 8px; align-items: center; font-size: .95rem; }
 .hint { font-size: .85rem; color: var(--muted); margin: 0; }
 

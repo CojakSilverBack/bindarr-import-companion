@@ -20,6 +20,12 @@ Paste a list, check the review table, copy the result, import it into Bindarr.
 
 Section headers (`Commander`, `Deck`, `SIDEBOARD:`) and blank lines are skipped.
 
+## Picking a set
+
+**Default set** and **Set code fixes** both suggest sets from Scryfall's full list as you type, by code
+(`adft`) or by name (`edge of`). Click a suggestion, or use the arrow keys and Enter, to fill in its code.
+In **Set code fixes** only the entry under the cursor is completed, so `PRE=edge of` becomes `PRE=EOE`.
+
 ## Review statuses
 
 - **Matched**: Scryfall found exactly the printing the line asked for.
@@ -77,6 +83,21 @@ The Docker image sends the full set of security headers (CSP, `frame-ancestors`,
 CSP and referrer policy as `<meta>` tags; it has no `frame-ancestors` or `nosniff`. The page has no login
 and stores nothing, so that gap is small, but self-host the image if you want every header. Add HSTS at
 your HTTPS reverse proxy.
+
+## Future enhancements
+
+**Save as a Bindarr CSV.** Not built yet, because Bindarr's CSV import (as of 1.8.6) can't resolve Magic
+cards on its own:
+
+- Every `.csv` goes to Bindarr's native mapper (chosen by file extension). It never looks cards up on
+  Scryfall. A row only links to a real card when `Card ID` is `mtg-<scryfall id>` and Bindarr already has
+  that card cached; otherwise it creates a placeholder ("Imported Set", no image, $0).
+- Without a `Game` column the row defaults to Pokémon, and header names must match exactly
+  (`Set ID`/`Set Code`, `Card Number`, `Printing` = `Normal` or `Holofoil`).
+- The CSV does keep condition, language and purchase price, which the `.txt` import drops.
+
+A CSV export becomes worthwhile if Bindarr's CSV import learns to resolve cards by set and collector
+number (or Scryfall ID). Until then, `.txt` is the reliable path.
 
 ## Develop
 

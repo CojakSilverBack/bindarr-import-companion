@@ -30,15 +30,15 @@
     <div class="opts">
       <div class="field">
         <label for="defset">Default set for lines without one</label>
-        <input type="text" id="defset" placeholder="e.g. EOC" autocomplete="off">
+        <input type="text" id="defset" placeholder="Code or name, e.g. EOC" autocomplete="off" spellcheck="false">
       </div>
       <div class="field">
         <label for="setmap">Set code fixes</label>
-        <input type="text" id="setmap" placeholder="e.g. PRE=PDFT, ASDFT=ADFT" autocomplete="off">
+        <input type="text" id="setmap" placeholder="e.g. PRE=PDFT, ASDFT=ADFT" autocomplete="off" spellcheck="false">
       </div>
       <label class="check"><input type="checkbox" id="usescry" checked> Check every card against Scryfall</label>
     </div>
-    <p class="hint">Precons: use the commander set's code (Edge of Eternities Commander is <span class="mono">EOC</span>). Cards not found in that set fall back to any printing and get flagged. Set code fixes map TCGplayer-only codes to Scryfall codes.</p>
+    <p class="hint">Precons: use the commander set's code (Edge of Eternities Commander is <span class="mono">EOC</span>). Cards not found in that set fall back to any printing and get flagged. Set code fixes map TCGplayer-only codes to Scryfall codes. Both fields suggest Scryfall sets as you type a code or a name.</p>
     <div class="actions">
       <button class="primary" id="go" type="button">Convert</button>
       <span class="status" id="status" role="status"></span>
@@ -62,9 +62,10 @@
     <textarea id="output" readonly spellcheck="false" aria-label="Bindarr import text"></textarea>
     <div class="actions">
       <button class="primary" id="copy" type="button">Copy text</button>
+      <button id="save" type="button">Save as .txt</button>
       <span class="status" id="copystatus" role="status"></span>
     </div>
-    <p class="hint">Save it as a <span class="mono">.txt</span> file and import it once. Bindarr adds every line as new copies, so importing the same list twice doubles the cards. Red rows are left out of this text; add those cards by hand.</p>
+    <p class="hint">Import the <span class="mono">.txt</span> file once, in Bindarr under Settings → Import Backup. Bindarr adds every line as new copies, so importing the same list twice doubles the cards. Red rows are left out of this text; add those cards by hand.</p>
   </section>
 
   <footer>

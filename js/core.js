@@ -98,7 +98,46 @@
     return id.set ? (nameHit && card.set === id.set) : nameHit;
   }
 
-  const api = { LIMITS: LIMITS, checkInput: checkInput, parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
+  /**
+   * Rank Scryfall sets for an autocomplete query. sets: [{ code, name, released }].
+   * Order: exact code, code prefix, a word in the name starts with the query, name contains it;
+   * newest first within each group.
+   */
+  function matchSets(sets, query, limit) {
+    const q = (query || "").trim().toLowerCase();
+    if (!q) return [];
+    const hits = [];
+    (sets || []).forEach(function (s) {
+      const code = s.code.toLowerCase(), name = s.name.toLowerCase();
+      let rank = -1;
+      if (code === q) rank = 0;
+      else if (code.indexOf(q) === 0) rank = 1;
+      else if (name.indexOf(q) === 0 || name.indexOf(" " + q) !== -1) rank = 2;
+      else if (name.indexOf(q) !== -1) rank = 3;
+      if (rank !== -1) hits.push({ s: s, rank: rank });
+    });
+    hits.sort(function (a, b) {
+      return a.rank - b.rank || (b.s.released || "").localeCompare(a.s.released || "") || a.s.name.localeCompare(b.s.name);
+    });
+    return hits.slice(0, limit || 12).map(function (h) { return h.s; });
+  }
+
+  /**
+   * The entry under the caret in a "PRE=PDFT, ASDFT=ADFT" field: the text between the nearest
+   * separators (, ; =). Returns { start, end, text } with surrounding spaces trimmed off.
+   */
+  function tokenAt(value, caret) {
+    const v = value || "";
+    const at = Math.max(0, Math.min(caret == null ? v.length : caret, v.length));
+    let start = at, end = at;
+    while (start > 0 && !/[,;=]/.test(v[start - 1])) start--;
+    while (end < v.length && !/[,;=]/.test(v[end])) end++;
+    while (start < end && v[start] === " ") start++;
+    while (end > start && v[end - 1] === " ") end--;
+    return { start: start, end: end, text: v.slice(start, end) };
+  }
+
+  const api = { LIMITS: LIMITS, checkInput: checkInput, matchSets: matchSets, tokenAt: tokenAt, parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.BindarrCore = api;
 })(this);

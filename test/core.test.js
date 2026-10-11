@@ -89,3 +89,31 @@ test("checkInput enforces character and line limits", () => {
   assert.match(C.checkInput("x".repeat(C.LIMITS.maxChars + 1)), /characters/);
   assert.match(C.checkInput("1 Sol Ring\n".repeat(C.LIMITS.maxLines + 1)), /lines/);
 });
+
+const SETS = [
+  { code: "EOE", name: "Edge of Eternities", released: "2025-08-01" },
+  { code: "EOC", name: "Edge of Eternities Commander", released: "2025-08-01" },
+  { code: "TEOC", name: "Edge of Eternities Commander Tokens", released: "2025-08-01" },
+  { code: "YEOE", name: "Alchemy: Edge of Eternities", released: "2025-08-26" },
+  { code: "DFT", name: "Aetherdrift", released: "2025-02-14" },
+  { code: "ADFT", name: "Aetherdrift Art Series", released: "2025-02-14" }
+];
+
+test("matchSets: exact code first, then code prefix", () => {
+  assert.deepEqual(C.matchSets(SETS, "adft").map((s) => s.code), ["ADFT"]);
+  assert.deepEqual(C.matchSets(SETS, "eo").map((s) => s.code), ["EOE", "EOC"]);
+});
+
+test("matchSets: name search, word starts before substring", () => {
+  const codes = C.matchSets(SETS, "edge of").map((s) => s.code);
+  assert.deepEqual(codes.slice().sort(), ["EOC", "EOE", "TEOC", "YEOE"]);
+  assert.deepEqual(C.matchSets(SETS, "aether").map((s) => s.code).sort(), ["ADFT", "DFT"]);
+  assert.deepEqual(C.matchSets(SETS, "  "), []);
+});
+
+test("tokenAt finds the entry under the caret in set code fixes", () => {
+  const v = "PRE=PDFT, ASDFT=adf";
+  assert.deepEqual(C.tokenAt(v, v.length), { start: 16, end: 19, text: "adf" });
+  assert.equal(C.tokenAt(v, 2).text, "PRE");
+  assert.equal(C.tokenAt("PRE=edge of", 11).text, "edge of");
+});

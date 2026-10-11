@@ -56,6 +56,110 @@
     const res = await fetchTimed("https://api.scryfall.com/cards/named?fuzzy=" + encodeURIComponent(name), { headers: { "Accept": "application/json" } });
     return res.ok ? res.json() : null;
   }
+  // ---- Set autocomplete (Default set, Set code fixes) ----
+  // Scryfall's full set list, fetched once on first use and kept in memory for the page's lifetime.
+  let setsPromise = null;
+  function loadSets() {
+    if (!setsPromise) {
+      setsPromise = fetchTimed("https://api.scryfall.com/sets", { headers: { "Accept": "application/json" } })
+        .then(function (res) { if (!res.ok) throw new Error("Scryfall answered " + res.status); return res.json(); })
+        .then(function (j) {
+          return (j.data || []).map(function (s) { return { code: s.code.toUpperCase(), name: s.name, released: s.released_at || "" }; });
+        })
+        .catch(function () { setsPromise = null; return []; });   // no suggestions; typing still works, retry next time
+    }
+    return setsPromise;
+  }
+
+  /**
+   * Attach a set dropdown to an input. mode "whole": the field holds one set code.
+   * mode "token": the field holds "A=B, C=D" pairs; only the entry under the caret is completed.
+   */
+  function attachSetAutocomplete(input, mode) {
+    const list = document.createElement("ul");
+    list.id = input.id + "-list";
+    list.className = "ac-list";
+    list.setAttribute("role", "listbox");
+    list.hidden = true;
+    input.parentNode.appendChild(list);
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-autocomplete", "list");
+    input.setAttribute("aria-controls", list.id);
+    input.setAttribute("aria-expanded", "false");
+
+    let items = [], active = -1, closeTimer = null;
+
+    function query() {
+      return mode === "token" ? C.tokenAt(input.value, input.selectionStart).text : input.value;
+    }
+    function close() {
+      list.hidden = true; items = []; active = -1;
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+    }
+    function highlight(i) {
+      active = i;
+      Array.prototype.forEach.call(list.children, function (li, k) { li.setAttribute("aria-selected", k === i ? "true" : "false"); });
+      if (i >= 0) { input.setAttribute("aria-activedescendant", list.children[i].id); list.children[i].scrollIntoView({ block: "nearest" }); }
+      else input.removeAttribute("aria-activedescendant");
+    }
+    function pick(i) {
+      const s = items[i];
+      if (!s) return;
+      if (mode === "token") {
+        const t = C.tokenAt(input.value, input.selectionStart);
+        input.value = input.value.slice(0, t.start) + s.code + input.value.slice(t.end);
+        const caret = t.start + s.code.length;
+        input.setSelectionRange(caret, caret);
+      } else {
+        input.value = s.code;
+      }
+      close();
+    }
+    async function update() {
+      const q = query();
+      if (!q.trim()) { close(); return; }
+      const sets = await loadSets();
+      if (q !== query()) return;   // the user kept typing while the list loaded
+      items = C.matchSets(sets, q, 12);
+      if (!items.length) { close(); return; }
+      list.textContent = "";
+      items.forEach(function (s, k) {
+        const li = document.createElement("li");
+        li.id = list.id + "-" + k;
+        li.setAttribute("role", "option");
+        const code = document.createElement("b");
+        code.textContent = s.code;
+        const name = document.createElement("span");
+        name.textContent = s.name + (s.released ? " · " + s.released.slice(0, 4) : "");
+        li.appendChild(code); li.appendChild(name);
+        li.addEventListener("mousedown", function (e) { e.preventDefault(); });   // keep focus in the input
+        li.addEventListener("click", function () { pick(k); input.focus(); });
+        list.appendChild(li);
+      });
+      list.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+      highlight(-1);
+    }
+
+    input.addEventListener("input", update);
+    input.addEventListener("focus", function () { loadSets(); });
+    input.addEventListener("blur", function () { closeTimer = setTimeout(close, 150); });
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (list.hidden) { update(); return; }
+        e.preventDefault();
+        const n = items.length;
+        highlight(e.key === "ArrowDown" ? (active + 1) % n : (active <= 0 ? n - 1 : active - 1));
+      } else if (e.key === "Enter" && !list.hidden && active >= 0) {
+        e.preventDefault(); pick(active);
+      } else if (e.key === "Escape" && !list.hidden) {
+        e.preventDefault(); close();
+      }
+    });
+    input.addEventListener("focus", function () { clearTimeout(closeTimer); });
+  }
+
   async function resolvePass(list, idFn) {
     for (let i = 0; i < list.length; i += BATCH) {
       const chunk = list.slice(i, i + BATCH);
@@ -176,7 +280,7 @@
     if (by("warn")) parts.push("<span class=\"pill warn\">" + by("warn") + " to check</span>");
     if (by("bad")) parts.push("<span class=\"pill bad\">" + by("bad") + " missing</span>");
     const rejected = rows.filter(function (r) { return r._invalid; }).length;
-    if (rejected) parts.push("<span class=\"pill bad\">" + rejected + " lines rejected</span>");
+    if (rejected) parts.push("<span class=\"pill bad\">" + rejected + (rejected === 1 ? " line" : " lines") + " rejected</span>");
     if (by("idle")) parts.push("<span class=\"pill idle\">" + by("idle") + " unchecked</span>");
     parts.push("<span class=\"pill idle\">" + sum(function (r) { return r.foil; }) + " foil</span>");
     if (skipped.length) parts.push("<span class=\"pill idle\" title=\"" + esc(skipped.map(function (s) { return s.raw; }).join(" | ")) + "\">" + skipped.length + " header lines skipped</span>");
@@ -187,6 +291,38 @@
     $("output").value = rows.filter(function (r) { return r.status !== "bad" && r.set && r.num; }).map(C.formatLine).join("\n");
   }
 
+  // Save the output as a .txt file. Chrome and Edge open a real "Save as" dialog;
+  // other browsers (and pages without the File System Access API) download it instead.
+  async function saveTxt() {
+    const text = $("output").value;
+    const status = $("copystatus");
+    if (!text) { status.textContent = "Nothing to save yet. Press Convert first."; return; }
+    const body = text + "\n";
+    const fileName = "bindarr-import-" + new Date().toISOString().slice(0, 10) + ".txt";
+    if (typeof window.showSaveFilePicker === "function") {
+      try {
+        const handle = await window.showSaveFilePicker({ suggestedName: fileName, types: [{ description: "Text file", accept: { "text/plain": [".txt"] } }] });
+        const w = await handle.createWritable();
+        await w.write(body);
+        await w.close();
+        status.textContent = "Saved " + handle.name + ".";
+        return;
+      } catch (e) {
+        if (e.name === "AbortError") return;   // user cancelled the dialog
+        // Anything else (e.g. blocked in an iframe): fall through to a plain download.
+      }
+    }
+    const url = URL.createObjectURL(new Blob([body], { type: "text/plain;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    status.textContent = "Downloaded " + fileName + ".";
+  }
+
+  attachSetAutocomplete($("defset"), "whole");
+  attachSetAutocomplete($("setmap"), "token");
+  $("save").addEventListener("click", saveTxt);
   $("go").addEventListener("click", function () { convert($("usescry").checked); });
   $("copy").addEventListener("click", async function () {
     const ta = $("output");
