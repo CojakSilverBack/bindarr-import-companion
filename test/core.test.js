@@ -137,3 +137,16 @@ test("duplicatePrintings clears once one copy is ticked foil, and ignores missin
     { set: "RNA", num: "245", foil: false, status: "bad" }
   ]), [null, null]);
 });
+
+test("reviewOrder pulls lines with the same printing together, whatever their foil ticks", () => {
+  const rows = [
+    { set: "DFT", num: "64", foil: false, status: "ok" },   // Spell Pierce x2
+    { set: "DFT", num: "267", foil: false, status: "ok" },
+    { set: "", num: "", foil: false, status: "bad" },
+    { set: "DFT", num: "64", foil: true, status: "ok" },    // Spell Pierce x1, ticked foil
+    { set: "DFT", num: "370", foil: false, status: "ok" }
+  ];
+  const v = C.reviewOrder(rows);
+  assert.deepEqual(v.order, [0, 3, 1, 2, 4]);
+  assert.deepEqual(v.grouped, [true, false, false, true, false]);
+});

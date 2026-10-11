@@ -161,7 +161,28 @@
     return out;
   }
 
-  const api = { LIMITS: LIMITS, duplicatePrintings: duplicatePrintings, checkInput: checkInput, matchSets: matchSets, tokenAt: tokenAt, parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
+  /**
+   * Order for the review table: lines that share a printing (set + collector number) are pulled together,
+   * at the position of the first one; everything else keeps its original order. Foil ticks are ignored,
+   * so the order stays put while you tick. Returns { order: [row indexes], grouped: [bool per row] }.
+   */
+  function reviewOrder(rows) {
+    const keyOf = function (r) { return r.status === "bad" || !r.set || !r.num ? null : r.set.toUpperCase() + "|" + String(r.num).toLowerCase(); };
+    const members = {};
+    rows.forEach(function (r, i) { const k = keyOf(r); if (k) (members[k] = members[k] || []).push(i); });
+    const order = [], placed = {};
+    const grouped = rows.map(function () { return false; });
+    rows.forEach(function (r, i) {
+      const k = keyOf(r);
+      if (!k) { order.push(i); return; }
+      if (placed[k]) return;
+      placed[k] = true;
+      members[k].forEach(function (j) { order.push(j); if (members[k].length > 1) grouped[j] = true; });
+    });
+    return { order: order, grouped: grouped };
+  }
+
+  const api = { LIMITS: LIMITS, duplicatePrintings: duplicatePrintings, reviewOrder: reviewOrder, checkInput: checkInput, matchSets: matchSets, tokenAt: tokenAt, parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.BindarrCore = api;
 })(this);

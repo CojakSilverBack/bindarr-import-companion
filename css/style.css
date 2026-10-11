@@ -81,6 +81,7 @@ th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--lin
 th { font: 600 .75rem var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--bg); position: sticky; top: 0; }
 tr:last-child td { border-bottom: 0; }
 td.num { text-align: right; }
+tr.same-printing td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
 td.note { color: var(--muted); font-size: .85rem; max-width: 18rem; }
 td.src { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); max-width: 22rem; overflow-wrap: anywhere; }
 

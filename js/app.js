@@ -269,8 +269,11 @@
 
   function render() {
     applyDuplicateFlags();
-    $("rows").innerHTML = rows.map(function (r, i) {
-      return "<tr>" +
+    // Lines with the same printing sit next to each other, so the foil copy is easy to find and tick.
+    const view = C.reviewOrder(rows);
+    $("rows").innerHTML = view.order.map(function (i) {
+      const r = rows[i];
+      return "<tr" + (view.grouped[i] ? " class=\"same-printing\"" : "") + ">" +
         "<td class=\"num\">" + r.qty + "</td>" +
         "<td>" + esc(r.name) + "</td>" +
         "<td class=\"mono\">" + esc(r.set || "—") + " · " + esc(r.num || "—") + "</td>" +
