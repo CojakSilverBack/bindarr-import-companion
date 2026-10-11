@@ -137,7 +137,31 @@
     return { start: start, end: end, text: v.slice(start, end) };
   }
 
-  const api = { LIMITS: LIMITS, checkInput: checkInput, matchSets: matchSets, tokenAt: tokenAt, parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
+  /**
+   * Same printing (set + collector number) on more than one line, with every copy marked the same way
+   * for foil. TCGplayer exports don't mark foils, so a normal + foil pair arrives as two identical lines.
+   * Returns an array parallel to rows: null, or { lines } (how many lines share that printing).
+   * Rows with status "bad" or no set/number are ignored. Once the foil ticks differ, the group is not flagged.
+   */
+  function duplicatePrintings(rows) {
+    const groups = {};
+    rows.forEach(function (r, i) {
+      if (r.status === "bad" || !r.set || !r.num) return;
+      const key = r.set.toUpperCase() + "|" + String(r.num).toLowerCase();
+      (groups[key] = groups[key] || []).push(i);
+    });
+    const out = rows.map(function () { return null; });
+    Object.keys(groups).forEach(function (key) {
+      const idx = groups[key];
+      if (idx.length < 2) return;
+      const foil = !!rows[idx[0]].foil;
+      if (idx.some(function (i) { return !!rows[i].foil !== foil; })) return;
+      idx.forEach(function (i) { out[i] = { lines: idx.length }; });
+    });
+    return out;
+  }
+
+  const api = { LIMITS: LIMITS, duplicatePrintings: duplicatePrintings, checkInput: checkInput, matchSets: matchSets, tokenAt: tokenAt, parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.BindarrCore = api;
 })(this);

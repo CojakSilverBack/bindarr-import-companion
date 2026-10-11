@@ -117,3 +117,23 @@ test("tokenAt finds the entry under the caret in set code fixes", () => {
   assert.equal(C.tokenAt(v, 2).text, "PRE");
   assert.equal(C.tokenAt("PRE=edge of", 11).text, "edge of");
 });
+
+test("duplicatePrintings flags a printing repeated with the same foil setting", () => {
+  const rows = [
+    { set: "RNA", num: "245", foil: false, status: "ok" },
+    { set: "RNA", num: "245", foil: false, status: "ok" },
+    { set: "RNA", num: "246", foil: false, status: "ok" }
+  ];
+  assert.deepEqual(C.duplicatePrintings(rows), [{ lines: 2 }, { lines: 2 }, null]);
+});
+
+test("duplicatePrintings clears once one copy is ticked foil, and ignores missing rows", () => {
+  assert.deepEqual(C.duplicatePrintings([
+    { set: "RNA", num: "245", foil: false, status: "ok" },
+    { set: "rna", num: "245", foil: true, status: "ok" }
+  ]), [null, null]);
+  assert.deepEqual(C.duplicatePrintings([
+    { set: "RNA", num: "245", foil: false, status: "ok" },
+    { set: "RNA", num: "245", foil: false, status: "bad" }
+  ]), [null, null]);
+});

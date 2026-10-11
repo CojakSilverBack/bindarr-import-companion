@@ -99,6 +99,23 @@ cards on its own:
 A CSV export becomes worthwhile if Bindarr's CSV import learns to resolve cards by set and collector
 number (or Scryfall ID). Until then, `.txt` is the reliable path.
 
+**Pokémon and Lorcana import lists.** This tool is currently built for Magic: The Gathering. If I find a need
+for me or from other Bindarr users to add Pokémon and/or Disney Lorcana lists too. Open an
+issue if you'd use it.
+
+What it would take:
+
+- **A game selector** that switches the parser, the card lookup and the set autocomplete per game. The
+  Magic path stays as it is.
+- **A card data source per game**, in place of Scryfall: a public Pokémon TCG API and a public Lorcana
+  card API. Each needs its own entry in the Content-Security-Policy `connect-src`.
+- **Parsers for each game's common export formats**, for example the TCGplayer app and other scanner and
+  collection apps. Set codes and collector numbers are formatted differently from Magic's.
+- **An output format Bindarr resolves for that game.** This is the main unknown. Bindarr's `.txt` import
+  looks cards up on Scryfall, so it only covers Magic. Before building anything:
+  - check how Bindarr imports Pokémon cards it can resolve to real cards (its CSV path defaults to
+    Pokémon but still creates placeholders unless the card is already cached)
+
 ## Develop
 
 ```bash

@@ -253,20 +253,40 @@
 
   const LABEL = { ok: "Matched", warn: "Check", bad: "Missing", idle: "Unchecked" };
 
+  // What the table shows. A repeated printing is flagged Check on top of whatever the lookup found;
+  // the flag is recomputed on every render, so it clears once the Foil ticks differ.
+  function applyDuplicateFlags() {
+    const dup = C.duplicatePrintings(rows);
+    rows.forEach(function (r, i) {
+      r.shown = { status: r.status, note: r.note };
+      if (dup[i] && r.status !== "bad") {
+        const why = "Same printing on " + dup[i].lines + " lines, all marked " + (r.foil ? "foil" : "non-foil") +
+          ". TCGplayer doesn't mark foils: if one copy is foil, tick Foil on that line.";
+        r.shown = { status: "warn", note: why + (r.note && r.note !== "Not checked" ? " " + r.note : "") };
+      }
+    });
+  }
+
   function render() {
+    applyDuplicateFlags();
     $("rows").innerHTML = rows.map(function (r, i) {
       return "<tr>" +
         "<td class=\"num\">" + r.qty + "</td>" +
         "<td>" + esc(r.name) + "</td>" +
         "<td class=\"mono\">" + esc(r.set || "—") + " · " + esc(r.num || "—") + "</td>" +
         "<td><input type=\"checkbox\" id=\"foil-" + i + "\" data-i=\"" + i + "\"" + (r.foil ? " checked" : "") + " aria-label=\"Foil: " + esc(r.name) + "\"></td>" +
-        "<td><span class=\"pill " + r.status + "\">" + LABEL[r.status] + "</span></td>" +
-        "<td class=\"note\">" + esc(r.note) + "</td>" +
+        "<td><span class=\"pill " + r.shown.status + "\">" + LABEL[r.shown.status] + "</span></td>" +
+        "<td class=\"note\">" + esc(r.shown.note) + "</td>" +
         "<td class=\"src\">" + esc(r.raw) + "</td>" +
         "</tr>";
     }).join("");
     $("rows").querySelectorAll("input[type=checkbox]").forEach(function (cb) {
-      cb.addEventListener("change", function (e) { rows[+e.target.dataset.i].foil = e.target.checked; writeOutput(); summarize(); });
+      cb.addEventListener("change", function (e) {
+        const i = +e.target.dataset.i;
+        rows[i].foil = e.target.checked;
+        render();                       // re-check repeated printings with the new foil tick
+        $("foil-" + i).focus();
+      });
     });
     writeOutput();
     summarize();
@@ -274,7 +294,7 @@
 
   function summarize() {
     const sum = function (pred) { return rows.filter(pred).reduce(function (a, r) { return a + r.qty; }, 0); };
-    const by = function (s) { return sum(function (r) { return r.status === s; }); };
+    const by = function (s) { return sum(function (r) { return r.shown.status === s; }); };
     const parts = ["<span class=\"pill idle\">" + rows.length + " lines · " + sum(function () { return true; }) + " cards</span>"];
     if (by("ok")) parts.push("<span class=\"pill ok\">" + by("ok") + " matched</span>");
     if (by("warn")) parts.push("<span class=\"pill warn\">" + by("warn") + " to check</span>");
