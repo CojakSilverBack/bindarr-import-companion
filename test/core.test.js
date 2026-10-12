@@ -150,3 +150,16 @@ test("reviewOrder pulls lines with the same printing together, whatever their fo
   assert.deepEqual(v.order, [0, 3, 1, 2, 4]);
   assert.deepEqual(v.grouped, [true, false, false, true, false]);
 });
+
+test("parseSetList: codes from commas or spaces, upper-cased, no repeats", () => {
+  assert.deepEqual(C.parseSetList("ecl, SPG ecl;mh3"), ["ECL", "SPG", "MH3"]);
+  assert.deepEqual(C.parseSetList("  "), []);
+});
+
+test("relatedSets: parent chain first, then extra sets, never the base set", () => {
+  const parents = { ECC: "ECL", TECC: "ECC", PECL: "ECL" };
+  assert.deepEqual(C.relatedSets("ECC", parents, []), ["ECL"]);
+  assert.deepEqual(C.relatedSets("tecc", parents, ["SPG", "ECL"]), ["ECC", "ECL", "SPG"]);
+  assert.deepEqual(C.relatedSets("ECL", parents, ["ECL", "SPG"]), ["SPG"]);
+  assert.deepEqual(C.relatedSets("", parents, []), []);
+});

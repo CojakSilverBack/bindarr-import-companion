@@ -64,7 +64,9 @@
       setsPromise = fetchTimed("https://api.scryfall.com/sets", { headers: { "Accept": "application/json" } })
         .then(function (res) { if (!res.ok) throw new Error("Scryfall answered " + res.status); return res.json(); })
         .then(function (j) {
-          return (j.data || []).map(function (s) { return { code: s.code.toUpperCase(), name: s.name, released: s.released_at || "" }; });
+          return (j.data || []).map(function (s) {
+            return { code: s.code.toUpperCase(), name: s.name, released: s.released_at || "", parent: (s.parent_set_code || "").toUpperCase() };
+          });
         })
         .catch(function () { setsPromise = null; return []; });   // no suggestions; typing still works, retry next time
     }
@@ -173,6 +175,12 @@
       if (i + BATCH < list.length) await sleep(COLLECTION_GAP_MS);
     }
   }
+  // Basic lands come in several arts per set; a match by name can't tell which one is in your hand.
+  function basicLandNote(c) {
+    return /\bBasic\b.*\bLand\b/.test(c.type_line || "") ? "Basic land: the set may have several arts; check the number against your card." : "";
+  }
+  function joinNotes(a, b) { return [a, b].filter(Boolean).join(" "); }
+
   function applyCard(r, status, note) {
     const c = r._card;
     r.name = c.name; r.set = c.set.toUpperCase(); r.num = c.collector_number;
@@ -209,7 +217,10 @@
       // Pass 1: exactly what the line asked for (set + number, or name in the given set).
       await resolvePass(valid, function (r) { return C.identifierFor(r, defSet, map); });
       valid.forEach(function (r) {
-        if (r._card) applyCard(r, "ok", r.src === "tcgplayer" && r.variant ? "TCGplayer variant: " + r.variant : "");
+        if (!r._card) return;
+        const variant = r.src === "tcgplayer" && r.variant ? "TCGplayer variant: " + r.variant : "";
+        const land = r.num ? "" : basicLandNote(r._card);   // found by name, so the art is a guess
+        applyCard(r, land ? "warn" : "ok", joinNotes(variant, land));
       });
 
       // Pass 2: number not found -> same set, by name.
@@ -220,17 +231,40 @@
         left.forEach(function (r) { if (r._card) applyCard(r, "warn", "Number " + r.num + " not found in " + r.wantSet + "; matched by name"); });
       }
 
-      // Pass 3: not in that set -> Scryfall's default printing.
+      // Pass 3: not in that set -> its related sets, in order: Scryfall's parent set (ECC -> ECL),
+      // then the "Also look in" sets.
+      left = valid.filter(function (r) { return !r._card && r.wantSet; });
+      if (left.length) {
+        const sets = await loadSets();
+        const parents = {};
+        sets.forEach(function (s) { if (s.parent) parents[s.code] = s.parent; });
+        const extra = C.parseSetList($("alsoin").value);
+        const tryList = new Map(left.map(function (r) { return [r, C.relatedSets(r.wantSet, parents, extra)]; }));
+        for (let k = 0; ; k++) {
+          const batch = left.filter(function (r) { return !r._card && tryList.get(r)[k]; });
+          if (!batch.length) break;
+          await sleep(COLLECTION_GAP_MS);
+          await resolvePass(batch, function (r) { return { name: r.name, set: tryList.get(r)[k].toLowerCase() }; });
+          batch.forEach(function (r) {
+            if (!r._card) return;
+            const from = tryList.get(r)[k];
+            const why = parents[r.wantSet] === from ? "parent set" : (extra.indexOf(from) !== -1 ? "Also look in" : "related set");
+            applyCard(r, "warn", joinNotes("Not in " + r.wantSet + "; found in " + from + " (" + why + ") #" + r._card.collector_number + ".", basicLandNote(r._card)));
+          });
+        }
+      }
+
+      // Pass 4: still not found -> Scryfall's default printing.
       left = valid.filter(function (r) { return !r._card; });
       if (left.length) {
         await sleep(COLLECTION_GAP_MS);
         await resolvePass(left, function (r) { return { name: r.name }; });
         left.forEach(function (r) {
-          if (r._card) applyCard(r, "warn", "Not in " + (r.wantSet || "any given set") + "; used Scryfall's default printing (" + r._card.set.toUpperCase() + ")");
+          if (r._card) applyCard(r, "warn", "Not in " + (r.wantSet || "any given set") + " or its related sets; used Scryfall's default printing (" + r._card.set.toUpperCase() + ")");
         });
       }
 
-      // Pass 4: typos and partial names -> fuzzy, one at a time.
+      // Pass 5: typos and partial names -> fuzzy, one at a time.
       left = valid.filter(function (r) { return !r._card; });
       left.slice(MAX_FUZZY).forEach(function (r) {
         r.status = "bad"; r.note = "Not found; skipped the name-correction lookup (limit " + MAX_FUZZY + " per run). Add by hand.";
@@ -345,6 +379,7 @@
 
   attachSetAutocomplete($("defset"), "whole");
   attachSetAutocomplete($("setmap"), "token");
+  attachSetAutocomplete($("alsoin"), "token");
   $("save").addEventListener("click", saveTxt);
   $("go").addEventListener("click", function () { convert($("usescry").checked); });
   $("copy").addEventListener("click", async function () {

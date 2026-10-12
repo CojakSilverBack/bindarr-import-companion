@@ -182,7 +182,32 @@
     return { order: order, grouped: grouped };
   }
 
-  const api = { LIMITS: LIMITS, duplicatePrintings: duplicatePrintings, reviewOrder: reviewOrder, checkInput: checkInput, matchSets: matchSets, tokenAt: tokenAt, parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
+  /** "ECL, SPG ecl" -> ["ECL", "SPG"]: a list of set codes, upper-cased, duplicates dropped. */
+  function parseSetList(text) {
+    const out = [];
+    (text || "").split(/[\s,;]+/).forEach(function (c) {
+      const code = c.trim().toUpperCase();
+      if (code && out.indexOf(code) === -1) out.push(code);
+    });
+    return out;
+  }
+
+  /**
+   * Sets to try, in order, when a card isn't in `base`: base's parent set from Scryfall (and its parent,
+   * up to 3 levels, e.g. ECC -> ECL), then the user's extra sets. `parents` maps CODE -> parent CODE.
+   * Never includes base itself, and never repeats a set.
+   */
+  function relatedSets(base, parents, extra) {
+    const b = (base || "").toUpperCase();
+    const out = [];
+    const add = function (c) { if (c && c !== b && out.indexOf(c) === -1) out.push(c); };
+    let cur = b, depth = 0;
+    while (cur && parents && parents[cur] && depth < 3) { cur = parents[cur]; add(cur); depth++; }
+    (extra || []).forEach(add);
+    return out;
+  }
+
+  const api = { LIMITS: LIMITS, parseSetList: parseSetList, relatedSets: relatedSets, duplicatePrintings: duplicatePrintings, reviewOrder: reviewOrder, checkInput: checkInput, matchSets: matchSets, tokenAt: tokenAt, parseSetMap: parseSetMap, parseLine: parseLine, formatLine: formatLine, identifierFor: identifierFor, cardMatches: cardMatches };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.BindarrCore = api;
 })(this);

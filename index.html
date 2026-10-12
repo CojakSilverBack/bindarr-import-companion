@@ -36,9 +36,13 @@
         <label for="setmap">Set code fixes</label>
         <input type="text" id="setmap" placeholder="e.g. PRE=PDFT, ASDFT=ADFT" autocomplete="off" spellcheck="false">
       </div>
+      <div class="field">
+        <label for="alsoin">Also look in</label>
+        <input type="text" id="alsoin" placeholder="e.g. ECL, SPG" autocomplete="off" spellcheck="false">
+      </div>
       <label class="check"><input type="checkbox" id="usescry" checked> Check every card against Scryfall</label>
     </div>
-    <p class="hint">Precons: use the commander set's code (Edge of Eternities Commander is <span class="mono">EOC</span>). Cards not found in that set fall back to any printing and get flagged. Set code fixes map TCGplayer-only codes to Scryfall codes. Both fields suggest Scryfall sets as you type a code or a name.</p>
+    <p class="hint">Precons: use the commander set's code (Edge of Eternities Commander is <span class="mono">EOC</span>). Cards not found in that set are looked for in its parent set (Lorwyn Eclipsed Commander → Lorwyn Eclipsed), then in the <b>Also look in</b> sets, then in any printing; all of these get flagged. Set code fixes map TCGplayer-only codes to Scryfall codes. Every set field suggests Scryfall sets as you type a code or a name.</p>
     <div class="actions">
       <button class="primary" id="go" type="button">Convert</button>
       <span class="status" id="status" role="status"></span>

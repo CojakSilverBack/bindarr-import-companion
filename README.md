@@ -22,14 +22,24 @@ Section headers (`Commander`, `Deck`, `SIDEBOARD:`) and blank lines are skipped.
 
 ## Picking a set
 
-**Default set** and **Set code fixes** both suggest sets from Scryfall's full list as you type, by code
+**Default set**, **Set code fixes** and **Also look in** all suggest sets from Scryfall's full list as you type, by code
 (`adft`) or by name (`edge of`). Click a suggestion, or use the arrow keys and Enter, to fill in its code.
-In **Set code fixes** only the entry under the cursor is completed, so `PRE=edge of` becomes `PRE=EOE`.
+In **Set code fixes** and **Also look in** only the entry under the cursor is completed, so `PRE=edge of`
+becomes `PRE=EOE`.
+
+When a card isn't in its set, the lookup tries, in order:
+
+1. the set's **parent set** on Scryfall (a commander set's parent is its main set: `ECC` → `ECL`)
+2. the sets in **Also look in**, left to right (e.g. `SPG` for Special Guests)
+3. Scryfall's default printing
+
+Cards found in steps 1–3 are flagged **Check** with a note saying where they came from. Basic lands
+matched by name are flagged too, since a set usually has several arts of each.
 
 ## Review statuses
 
 - **Matched**: Scryfall found exactly the printing the line asked for.
-- **Check**: Scryfall found the card, but in a different printing (number not in that set, card not in the default set, or a fuzzy name correction). Confirm against the physical card.
+- **Check**: Scryfall found the card, but not exactly as asked: number not in that set, found in a related set or Scryfall's default printing, a basic land matched by name, a fuzzy name correction, or the same printing on several lines with the same foil setting. Confirm against the physical card.
 - **Missing**: not found. The line is left out of the output; add the card in Bindarr by hand.
 
 ## Things to know
@@ -41,8 +51,8 @@ In **Set code fixes** only the entry under the cursor is completed, so `PRE=edge
   foil pair. Tick **Foil** in the review table.
 - **TCGplayer-only set codes** (`PRE`, `ASDFT`, …) don't always match Scryfall's. Use **Set code fixes**
   (`PRE=PDFT, ASDFT=ADFT`) or fix the flagged rows afterwards.
-- **Precons**: use the commander set's code. Cards printed elsewhere (often the basic lands) are flagged
-  **Check** with the printing Scryfall chose. To track the precon as a deck, import the converted list
+- **Precons**: use the commander set's code. Cards printed elsewhere (often the basic lands) are looked
+  for in the main set next, and flagged **Check** with where they were found. To track the precon as a deck, import the converted list
   into your collection once, then create the deck from the same list in Bindarr's Deck Builder.
 
 ## Use it
