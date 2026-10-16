@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Same policy nginx sends as a header, minus frame-ancestors (ignored in a meta tag). Covers GitHub Pages, which can't set headers. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://api.scryfall.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="See how much of each Magic set you own, by card and by printing, from a Bindarr collection export.">
+  <title>Set completion · Bindarr Import Companion</title>
+  <link rel="stylesheet" href="css/style.css?v=dev">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="tag">Unofficial companion for Bindarr</span>
+    <nav class="pages" aria-label="Pages">
+      <a href="./">Import list</a>
+      <a href="completion.html" aria-current="page">Set completion</a>
+    </nav>
+    <h1>Set completion</h1>
+    <p class="lede">Paste a Bindarr collection export to see how much of each set you own, by card and by printing, and get the list of what's missing.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="sc-h">
+    <h2 id="sc-h">1 · Paste your Bindarr export</h2>
+    <p class="hint">Export your collection from Bindarr, filtered to a set or block or two, and paste the tab-separated text with its header row. Card data comes from Scryfall and is saved in this browser, so a set is downloaded at most once a day, and again only when Scryfall adds cards to it or after 7 days.</p>
+    <textarea id="exportInput" spellcheck="false" aria-label="Bindarr collection export" placeholder="Card ID&#9;Name&#9;Set Name&#9;Set ID&#9;Card Number&#9;Rarity&#9;Quantity&#9;Condition&#9;Printing&#9;Language"></textarea>
+    <div class="opts">
+      <label class="check"><input type="checkbox" id="incCommon"> Include commons</label>
+      <label class="check"><input type="checkbox" id="forceRefresh"> Download fresh data from Scryfall</label>
+    </div>
+    <div class="actions">
+      <button class="primary" id="buildReport" type="button">Build report</button>
+      <button id="cancelReport" type="button" hidden>Cancel</button>
+      <span class="status" id="reportStatus" role="status"></span>
+    </div>
+    <div id="confirmBox" class="confirm" role="alertdialog" aria-labelledby="confirmText" hidden>
+      <p id="confirmText"></p>
+      <div class="actions">
+        <button class="primary" id="confirmYes" type="button">Continue</button>
+        <button id="confirmNo" type="button">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="rp-h">
+    <h2 id="rp-h">2 · Report</h2>
+    <div id="reportControls" class="actions" hidden>
+      <label class="check"><input type="checkbox" id="rpMissing"> Missing only</label>
+      <label class="check">List <select id="rpMode"><option value="card">By card</option><option value="printing">By printing</option></select></label>
+    </div>
+    <div id="reportOut"><p class="hint">Build a report to see it here.</p></div>
+  </section>
+
+  <section class="panel" aria-labelledby="ms-h">
+    <h2 id="ms-h">3 · Missing list <span id="missingCount" class="count"></span></h2>
+    <textarea id="missingOut" class="short" readonly spellcheck="false" aria-label="Missing cards as Bindarr text"></textarea>
+    <div class="actions">
+      <button class="primary" id="copyMissing" type="button">Copy</button>
+      <button id="saveMissingTxt" type="button">Save as .txt</button>
+      <button id="saveMissingCsv" type="button">Save as .csv</button>
+      <span class="status" id="missingStatus" role="status"></span>
+    </div>
+    <p class="hint">One line per missing card (By card, using its lowest-numbered printing) or per missing printing (By printing), as <span class="mono">1 Name (SET) number</span> for a Moxfield or TCGplayer want list. The CSV adds rarity and version. It follows the List setting in the report.</p>
+  </section>
+
+  <footer>
+    <span>Card data from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Not affiliated with Scryfall, Bindarr, TCGplayer, ManaBox, Moxfield or Wizards of the Coast.</span>
+    <span>Everything runs in your browser. Your export never leaves it: only set codes are sent to Scryfall's public API, and the card data that comes back is saved in this browser.</span>
+    <span><button id="clearCache" type="button" class="link">Clear saved set data</button></span>
+    <span>Version <span id="app-version" class="mono">dev</span> · <a href="https://github.com/CojakSilverBack/bindarr-import-companion/releases" target="_blank" rel="noopener">Releases</a></span>
+  </footer>
+</div>
+<script src="js/completion-core.js?v=dev"></script>
+<script src="js/completion.js?v=dev"></script>
+</body>
+</html>

@@ -85,6 +85,31 @@ tr.same-printing td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
 td.note { color: var(--muted); font-size: .85rem; max-width: 18rem; }
 td.src { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); max-width: 22rem; overflow-wrap: anywhere; }
 
+/* Page links in the header */
+.pages { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin-top: 6px; }
+.pages a { padding: 7px 14px; border: 1px solid transparent; border-bottom: 0; border-radius: 6px 6px 0 0; margin-bottom: -1px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: .92rem; }
+.pages a:hover { color: var(--ink); }
+.pages a[aria-current="page"] { background: var(--panel); border-color: var(--line); color: var(--ink); }
+
+/* Set completion page */
+h3 { font: 600 .95rem/1.2 var(--f-display); margin: 8px 0 0; letter-spacing: .04em; color: var(--ink); }
+h4 { font: 600 .82rem var(--f-body); margin: 0 0 6px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+h2 .count { font: 400 .85rem var(--f-body); letter-spacing: 0; text-transform: none; }
+textarea.short { min-height: 110px; }
+select { font: 14px var(--f-body); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+table.rp th.num, table.rp td.num { text-align: right; }
+table.rp tr.tot td { font-weight: 600; border-top: 1px solid var(--line); }
+#reportOut { display: grid; gap: 12px; }
+details.rpset { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+details.rpset > summary { cursor: pointer; font-weight: 600; }
+details.rpset[open] > summary { margin-bottom: 12px; }
+details.rpset .asof { margin-left: 10px; font-weight: 400; font-size: .82rem; color: var(--muted); }
+.rpgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 12px 20px; margin-bottom: 12px; }
+.confirm { border: 1px solid var(--warn); background: var(--warn-bg); color: var(--ink); border-radius: 6px; padding: 12px; display: grid; gap: 10px; }
+.confirm p { margin: 0; }
+.confirm[hidden] { display: none; }
+button.link { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }
+
 footer { font-size: .82rem; color: var(--muted); display: grid; gap: 4px; }
 footer a { color: var(--accent); }
 

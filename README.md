@@ -36,6 +36,32 @@ When a card isn't in its set, the lookup tries, in order:
 Cards found in steps 1–3 are flagged **Check** with a note saying where they came from. Basic lands
 matched by name are flagged too, since a set usually has several arts of each.
 
+## Set completion
+
+The **Set completion** page (`completion.html`, linked at the top of the import page) answers "how much
+of this set do I own?". Export your collection from Bindarr, filtered to a set or block or two, paste
+the tab-separated text and press **Build report**. For each set in the export it shows:
+
+- **By card**: a card counts as owned if you have any version of it (regular, borderless, extended art…).
+- **By printing**: every version on its own.
+- A card list with version labels, normal and foil copies, and filters for **Missing only** and
+  **By card / By printing**.
+- **Reconciliation**: copies, foil copies, distinct printings and sets parsed, plus any export rows
+  whose Set ID and Card Number weren't found on Scryfall, to compare with Bindarr's own count.
+- The **missing list** as `1 Name (SET) number` lines to copy or save as `.txt`, or as a `.csv` with
+  rarity and version. By card uses each card's lowest-numbered printing.
+
+Uncommon, rare and mythic are reported by default; tick **Include commons** to add them. Scryfall's
+`special` and `bonus` rarities get their own rows. Only sets that appear in the export are reported.
+
+**Scryfall data is saved in your browser** (IndexedDB), following Scryfall's request to cache for at
+least 24 hours. A set is downloaded again only when Scryfall's card count for it changes or the saved
+copy is over 7 days old, never within 24 hours, unless you tick **Download fresh data from Scryfall**.
+Each set section shows when its data was downloaded, and **Clear saved set data** in the footer removes
+it. If an export spans more than two blocks (a block is a set plus its commander, promo and token sets),
+the page says how many Scryfall requests it needs and asks before continuing. Digital-only sets are
+skipped.
+
 ## Review statuses
 
 - **Matched**: Scryfall found exactly the printing the line asked for.
@@ -125,6 +151,9 @@ What it would take:
   looks cards up on Scryfall, so it only covers Magic. Before building anything:
   - check how Bindarr imports Pokémon cards it can resolve to real cards (its CSV path defaults to
     Pokémon but still creates placeholders unless the card is already cached)
+
+**Set completion on phones.** The set completion page is built for desktop; on a phone its tables
+scroll sideways. A phone layout (stacked rows, collapsible columns) is a candidate for later.
 
 ## Develop
 
