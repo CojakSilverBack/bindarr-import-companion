@@ -85,8 +85,23 @@ tr.same-printing td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
 td.note { color: var(--muted); font-size: .85rem; max-width: 18rem; }
 td.src { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); max-width: 22rem; overflow-wrap: anywhere; }
 
-/* Page links in the header */
-.pages { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin-top: 6px; }
+/* Brand banner: fixed dark purple in both themes, matches .github/branding/social-preview.png */
+.banner { background: #1c1a2e; border-radius: 8px; border-bottom: 6px solid #7f77dd; padding: 20px 24px; }
+.brand { display: flex; align-items: center; gap: 20px; text-decoration: none; }
+.brand img { width: 96px; height: 96px; flex: none; }
+.brand-text { display: grid; gap: 2px; }
+.brand-name, .brand-sub { font: 700 2.1rem/1.05 var(--f-display); letter-spacing: .01em; color: #ffffff; }
+.brand-sub { color: #afa9ec; }
+.brand-tag { margin-top: 6px; font: 600 .72rem var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: #cecbf6; }
+@media (max-width: 520px) {
+  .banner { padding: 14px 16px; }
+  .brand { gap: 14px; }
+  .brand img { width: 64px; height: 64px; }
+  .brand-name, .brand-sub { font-size: 1.5rem; }
+}
+
+/* Page links under the banner */
+.pages { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin-bottom: -8px; }
 .pages a { padding: 7px 14px; border: 1px solid transparent; border-bottom: 0; border-radius: 6px 6px 0 0; margin-bottom: -1px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: .92rem; }
 .pages a:hover { color: var(--ink); }
 .pages a[aria-current="page"] { background: var(--panel); border-color: var(--line); color: var(--ink); }

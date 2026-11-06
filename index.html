@@ -3,22 +3,36 @@
 <head>
   <meta charset="utf-8">
   <!-- Same policy nginx sends as a header, minus frame-ancestors (ignored in a meta tag). Covers GitHub Pages, which can't set headers. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://api.scryfall.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://api.scryfall.com; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Convert TCGplayer exports, precon decklists and Moxfield lists into the text format Bindarr imports.">
   <title>Bindarr Import Companion</title>
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="manifest" href="img/site.webmanifest">
+  <meta name="theme-color" content="#1c1a2e">
   <link rel="stylesheet" href="css/style.css?v=dev">
 </head>
 <body>
 <div class="wrap">
+  <div class="banner">
+    <a class="brand" href="./">
+      <img src="img/logo.svg" alt="" width="96" height="96">
+      <span class="brand-text">
+        <span class="brand-name">Bindarr</span>
+        <span class="brand-sub">Import Companion</span>
+        <span class="brand-tag">Unofficial companion for Bindarr</span>
+      </span>
+    </a>
+  </div>
+  <nav class="pages" aria-label="Pages">
+    <a href="./" aria-current="page">Import list</a>
+    <a href="completion.html">Set completion</a>
+  </nav>
   <header>
-    <span class="tag">Unofficial companion for Bindarr</span>
-    <nav class="pages" aria-label="Pages">
-      <a href="./" aria-current="page">Import list</a>
-      <a href="completion.html">Set completion</a>
-    </nav>
-    <h1>Bindarr Import Companion</h1>
+    <h1>Import list</h1>
     <p class="lede">Paste a TCGplayer export, a decklist (precon, Moxfield, MTGGoldfish), or a ManaBox list. It rewrites every line into the text format Bindarr's <b>Settings → Import Backup</b> reads: <span class="mono">qty Name (SET) number</span>, plus <span class="mono">*F*</span> for foil.</p>
   </header>
 

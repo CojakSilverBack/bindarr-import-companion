@@ -3,21 +3,35 @@
 <head>
   <meta charset="utf-8">
   <!-- Same policy nginx sends as a header, minus frame-ancestors (ignored in a meta tag). Covers GitHub Pages, which can't set headers. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://api.scryfall.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://api.scryfall.com; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="See how much of each Magic set you own, by card and by printing, from a Bindarr collection export.">
   <title>Set completion · Bindarr Import Companion</title>
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="manifest" href="img/site.webmanifest">
+  <meta name="theme-color" content="#1c1a2e">
   <link rel="stylesheet" href="css/style.css?v=dev">
 </head>
 <body>
 <div class="wrap">
+  <div class="banner">
+    <a class="brand" href="./">
+      <img src="img/logo.svg" alt="" width="96" height="96">
+      <span class="brand-text">
+        <span class="brand-name">Bindarr</span>
+        <span class="brand-sub">Import Companion</span>
+        <span class="brand-tag">Unofficial companion for Bindarr</span>
+      </span>
+    </a>
+  </div>
+  <nav class="pages" aria-label="Pages">
+    <a href="./">Import list</a>
+    <a href="completion.html" aria-current="page">Set completion</a>
+  </nav>
   <header>
-    <span class="tag">Unofficial companion for Bindarr</span>
-    <nav class="pages" aria-label="Pages">
-      <a href="./">Import list</a>
-      <a href="completion.html" aria-current="page">Set completion</a>
-    </nav>
     <h1>Set completion</h1>
     <p class="lede">Paste a Bindarr collection export to see how much of each set you own, by card and by printing, and get the list of what's missing.</p>
   </header>
