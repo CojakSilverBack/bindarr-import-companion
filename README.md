@@ -1,5 +1,7 @@
 # Bindarr Import Companion
 
+![Bindarr Import Companion](.github/branding/social-preview.png)
+
 An unofficial companion page for [Bindarr](https://github.com/thenotoriousJeremy/bindarr). It converts card
 lists into the text format Bindarr's **Settings → Import Backup** reads:
 
@@ -163,7 +165,24 @@ node --test          # unit tests for js/core.js (Node 18+, no dependencies)
 
 - `js/core.js`: parsing and formatting, no DOM or network. This is what the tests cover.
 - `js/app.js`: page logic and Scryfall lookups.
-- `css/style.css`: light and dark themes via `prefers-color-scheme`. System fonts only.
+- `css/style.css`: light and dark themes via `prefers-color-scheme`. System fonts only. The brand banner
+  at the top of each page stays dark purple in both themes.
+- `img/`: logo, favicons, app icons and `site.webmanifest`. `favicon.ico` also sits at the repo root for
+  browsers that request it there.
+
+## Branding
+
+The icon is Bindarr's binder logo in purple, with a down arrow on the left page for "import".
+
+| File | Use |
+|---|---|
+| `img/logo.svg` | Page header logo. Themable with the same CSS variables as Bindarr's logo (`--logo-cover`, `--logo-page-left`, `--logo-page-right`, `--logo-spine`, `--logo-ring-stroke`, `--logo-ring-inner`), plus `--logo-arrow` |
+| `img/favicon.svg`, `favicon.ico`, `img/favicon-16x16.png`, `img/favicon-32x32.png` | Browser tab icons |
+| `img/apple-touch-icon.png`, `img/icon-192.png`, `img/icon-512.png`, `img/icon-maskable-512.png` | Home screen and app icons, listed in `img/site.webmanifest` |
+| `.github/branding/social-preview.png` | Repo social preview (Settings → General → Social preview) and the banner above |
+| `.github/branding/github-app-logo.png` | GitHub App logo |
+
+Colors: cover `#7f77dd`, spine `#534ab7`, arrow `#3c3489`, left page `#e4e1fb`, banner `#1c1a2e`.
 
 ## Credits
 
